@@ -124,7 +124,7 @@ class StackPool {
   public pushMapState(size: number) {
     const state = this.getUninitializedStateFromPool() as StackMapState;
 
-    state.type = STATE_MAP_KEY;
+    state.type = STATE_MAP_VALUE;
     state.readCount = -1;
     state.size = size;
     state.map = {};
@@ -442,23 +442,15 @@ export class Decoder {
         } else if (headByte < 0x90) {
           // fixmap (1000 xxxx) 0x80 - 0x8f
           const size = headByte - 0x80;
-          if (size !== 0) {
-            this.pushMapState(size);
-            this.complete();
-            continue DECODE;
-          } else {
-            object = {};
-          }
+          this.pushMapState(size);
+          this.complete();
+          continue DECODE;
         } else if (headByte < 0xa0) {
           // fixarray (1001 xxxx) 0x90 - 0x9f
           const size = headByte - 0x90;
-          if (size !== 0) {
-            this.pushArrayState(size);
-            this.complete();
-            continue DECODE;
-          } else {
-            object = [];
-          }
+          this.pushArrayState(size);
+          this.complete();
+          continue DECODE;
         } else {
           // fixstr (101x xxxx) 0xa0 - 0xbf
           const byteLength = headByte - 0xa0;
@@ -526,43 +518,27 @@ export class Decoder {
       } else if (headByte === 0xdc) {
         // array 16
         const size = this.readU16();
-        if (size !== 0) {
-          this.pushArrayState(size);
-          this.complete();
-          continue DECODE;
-        } else {
-          object = [];
-        }
+        this.pushArrayState(size);
+        this.complete();
+        continue DECODE;
       } else if (headByte === 0xdd) {
         // array 32
         const size = this.readU32();
-        if (size !== 0) {
-          this.pushArrayState(size);
-          this.complete();
-          continue DECODE;
-        } else {
-          object = [];
-        }
+        this.pushArrayState(size);
+        this.complete();
+        continue DECODE;
       } else if (headByte === 0xde) {
         // map 16
         const size = this.readU16();
-        if (size !== 0) {
-          this.pushMapState(size);
-          this.complete();
-          continue DECODE;
-        } else {
-          object = {};
-        }
+        this.pushMapState(size);
+        this.complete();
+        continue DECODE;
       } else if (headByte === 0xdf) {
         // map 32
         const size = this.readU32();
-        if (size !== 0) {
-          this.pushMapState(size);
-          this.complete();
-          continue DECODE;
-        } else {
-          object = {};
-        }
+        this.pushMapState(size);
+        this.complete();
+        continue DECODE;
       } else if (headByte === 0xc4) {
         // bin 8
         const size = this.lookU8();
@@ -602,22 +578,20 @@ export class Decoder {
             continue DECODE;
           }
         } else if (state.type === STATE_MAP_KEY) {
-          if (state.readCount === -1) {
-            state.objectType = object;
-            state.readCount = 0;
-          } else {
-            if (object === "__proto__") {
-              throw new DecodeError("The key __proto__ is not allowed");
-            }
-
-            state.key = this.mapKeyConverter(object);
-            state.type = STATE_MAP_VALUE;
+          if (object === "__proto__") {
+            throw new DecodeError("The key __proto__ is not allowed");
           }
+
+          state.key = this.mapKeyConverter(object);
+          state.type = STATE_MAP_VALUE;
           continue DECODE;
         } else {
           // it must be `state.type === State.MAP_VALUE` here
-
-          state.map[state.key!] = object;
+          if (state.readCount === -1) {
+            state.objectType = object;
+          } else {
+            state.map[state.key!] = object;
+          }
           state.readCount++;
 
           if (state.readCount === state.size) {
