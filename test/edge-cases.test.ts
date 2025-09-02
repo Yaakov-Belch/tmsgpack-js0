@@ -2,6 +2,7 @@
 // any errors should not break Encoder/Decoder instance states
 import assert from "assert";
 import { encode, decodeAsync, decode, Encoder, Decoder, decodeMulti, decodeMultiStream } from "../src/index.ts";
+import { pctrl, uctrl } from "./test-utils.ts";
 
 function testEncoder(encoder: Encoder): void {
   const object = {
@@ -9,7 +10,7 @@ function testEncoder(encoder: Encoder): void {
     bar: 2,
     baz: ["one", "two", "three"],
   };
-  assert.deepStrictEqual(decode(encoder.encode(object)), object);
+  assert.deepStrictEqual(decode(encoder.encode(object), uctrl()), object);
 }
 
 function testDecoder(decoder: Decoder): void {
@@ -18,13 +19,13 @@ function testDecoder(decoder: Decoder): void {
     bar: 2,
     baz: ["one", "two", "three"],
   };
-  assert.deepStrictEqual(decoder.decode(encode(object)), object);
+  assert.deepStrictEqual(decoder.decode(encode(object, pctrl())), object);
 }
 
 describe("edge cases", () => {
   context("try to encode cyclic refs", () => {
     it("throws errors on arrays", () => {
-      const encoder = new Encoder();
+      const encoder = new Encoder(pctrl());
       const cyclicRefs: Array<any> = [];
       cyclicRefs.push(cyclicRefs);
       assert.throws(() => {
@@ -34,7 +35,7 @@ describe("edge cases", () => {
     });
 
     it("throws errors on objects", () => {
-      const encoder = new Encoder();
+      const encoder = new Encoder(pctrl());
       const cyclicRefs: Record<string, any> = {};
       cyclicRefs["foo"] = cyclicRefs;
       assert.throws(() => {
@@ -46,9 +47,9 @@ describe("edge cases", () => {
 
   context("try to encode unrecognized objects", () => {
     it("throws errors", () => {
-      const encoder = new Encoder();
+      const encoder = new Encoder(pctrl());
       assert.throws(() => {
-        encode(() => {});
+        encoder.encode(() => {});
       }, /unrecognized object/i);
       testEncoder(encoder);
     });
@@ -56,11 +57,11 @@ describe("edge cases", () => {
 
   context("try to decode a map with non-string keys (asynchronous)", () => {
     it("throws errors", async () => {
-      const decoder = new Decoder();
+      const decoder = new Decoder(uctrl());
       const createStream = async function* () {
         yield [0x81]; // fixmap size=1
-        yield encode(null);
-        yield encode(null);
+        yield encode(null, pctrl());
+        yield encode(null, pctrl());
       };
 
       await assert.rejects(async () => {
@@ -72,7 +73,7 @@ describe("edge cases", () => {
 
   context("try to decode invalid MessagePack binary", () => {
     it("throws errors", () => {
-      const decoder = new Decoder();
+      const decoder = new Decoder(uctrl());
       const TYPE_NEVER_USED = 0xc1;
 
       assert.throws(() => {
@@ -84,7 +85,7 @@ describe("edge cases", () => {
 
   context("try to decode insufficient data", () => {
     it("throws errors (synchronous)", () => {
-      const decoder = new Decoder();
+      const decoder = new Decoder(uctrl());
       assert.throws(() => {
         decoder.decode([
           0x92, // fixarray size=2
@@ -95,10 +96,10 @@ describe("edge cases", () => {
     });
 
     it("throws errors (asynchronous)", async () => {
-      const decoder = new Decoder();
+      const decoder = new Decoder(uctrl());
       const createStream = async function* () {
         yield [0x92]; // fixarray size=2
-        yield encode(null);
+        yield encode(null, pctrl());
       };
 
       await assert.rejects(async () => {
@@ -110,21 +111,21 @@ describe("edge cases", () => {
 
   context("try to decode data with extra bytes", () => {
     it("throws errors (synchronous)", () => {
-      const decoder = new Decoder();
+      const decoder = new Decoder(uctrl());
       assert.throws(() => {
         decoder.decode([
           0x90, // fixarray size=0
-          ...encode(null),
+          ...encode(null, pctrl()),
         ]);
       }, RangeError);
       testDecoder(decoder);
     });
 
     it("throws errors (asynchronous)", async () => {
-      const decoder = new Decoder();
+      const decoder = new Decoder(uctrl());
       const createStream = async function* () {
         yield [0x90]; // fixarray size=0
-        yield encode(null);
+        yield encode(null, pctrl());
       };
 
       await assert.rejects(async () => {
@@ -134,9 +135,9 @@ describe("edge cases", () => {
     });
 
     it("throws errors (asynchronous)", async () => {
-      const decoder = new Decoder();
+      const decoder = new Decoder(uctrl());
       const createStream = async function* () {
-        yield [0x90, ...encode(null)]; // fixarray size=0 + nil
+        yield [0x90, ...encode(null, pctrl())]; // fixarray size=0 + nil
       };
 
       await assert.rejects(async () => {
@@ -149,12 +150,12 @@ describe("edge cases", () => {
   context("try to decode an empty input", () => {
     it("throws RangeError (synchronous)", () => {
       assert.throws(() => {
-        decode([]);
+        decode([], uctrl());
       }, RangeError);
     });
 
     it("decodes an empty array with decodeMulti()", () => {
-      assert.deepStrictEqual([...decodeMulti([])], []);
+      assert.deepStrictEqual([...decodeMulti([], uctrl())], []);
     });
 
     it("throws RangeError (asynchronous)", async () => {
@@ -163,7 +164,7 @@ describe("edge cases", () => {
       };
 
       assert.rejects(async () => {
-        await decodeAsync(createStream());
+        await decodeAsync(createStream(), uctrl());
       }, RangeError);
     });
 
@@ -173,7 +174,7 @@ describe("edge cases", () => {
       };
 
       const results: Array<unknown> = [];
-      for await (const item of decodeMultiStream(createStream())) {
+      for await (const item of decodeMultiStream(createStream(), uctrl())) {
         results.push(item);
       }
       assert.deepStrictEqual(results, []);

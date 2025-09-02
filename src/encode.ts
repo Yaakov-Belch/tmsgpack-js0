@@ -9,8 +9,8 @@ import type { PackCtrl } from "./index.ts";
  */
 export function encode(
   value: unknown,
-  pack_ctrl: PackCtrl,
+  packCtrl: PackCtrl,
 ): Uint8Array {
-  const encoder = new Encoder(pack_ctrl);
+  const encoder = new Encoder(packCtrl);
   return encoder.encodeSharedRef(value);
 }

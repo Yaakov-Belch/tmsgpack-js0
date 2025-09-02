@@ -1,6 +1,7 @@
 import assert from "assert";
 import * as ieee754 from "ieee754";
 import { decode } from "../src/index.ts";
+import { uctrl } from "./test-utils.ts";
 
 const FLOAT32_TYPE = 0xca;
 const FLOAT64_TYPE = 0xcb;
@@ -35,8 +36,8 @@ describe("codec: float 32/64", () => {
         ieee754.write(buf, value, 0, false, 23, 4);
         const expected = ieee754.read(buf, 0, false, 23, 4);
 
-        assert.deepStrictEqual(decode([FLOAT32_TYPE, ...buf]), expected, "matched sign");
-        assert.notDeepStrictEqual(decode([FLOAT32_TYPE, ...buf]), -expected, "unmatched sign");
+        assert.deepStrictEqual(decode([FLOAT32_TYPE, ...buf], uctrl()), expected, "matched sign");
+        assert.notDeepStrictEqual(decode([FLOAT32_TYPE, ...buf], uctrl()), -expected, "unmatched sign");
       });
     }
 
@@ -45,7 +46,7 @@ describe("codec: float 32/64", () => {
       ieee754.write(buf, NaN, 0, false, 23, 4);
       const expected = ieee754.read(buf, 0, false, 23, 4);
 
-      assert.deepStrictEqual(decode([FLOAT32_TYPE, ...buf]), expected, "matched sign");
+      assert.deepStrictEqual(decode([FLOAT32_TYPE, ...buf], uctrl()), expected, "matched sign");
     });
   });
 
@@ -56,8 +57,8 @@ describe("codec: float 32/64", () => {
         ieee754.write(buf, value, 0, false, 52, 8);
         const expected = ieee754.read(buf, 0, false, 52, 8);
 
-        assert.deepStrictEqual(decode([FLOAT64_TYPE, ...buf]), expected, "matched sign");
-        assert.notDeepStrictEqual(decode([FLOAT64_TYPE, ...buf]), -expected, "unmatched sign");
+        assert.deepStrictEqual(decode([FLOAT64_TYPE, ...buf], uctrl()), expected, "matched sign");
+        assert.notDeepStrictEqual(decode([FLOAT64_TYPE, ...buf], uctrl()), -expected, "unmatched sign");
       });
     }
 
@@ -66,7 +67,7 @@ describe("codec: float 32/64", () => {
       ieee754.write(buf, NaN, 0, false, 52, 8);
       const expected = ieee754.read(buf, 0, false, 52, 8);
 
-      assert.deepStrictEqual(decode([FLOAT64_TYPE, ...buf]), expected, "matched sign");
+      assert.deepStrictEqual(decode([FLOAT64_TYPE, ...buf], uctrl()), expected, "matched sign");
     });
   });
 });

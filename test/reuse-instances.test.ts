@@ -1,5 +1,6 @@
 import { deepStrictEqual } from "assert";
 import { Encoder, Decoder, decode } from "../src/index.ts";
+import { pctrl, uctrl } from "./test-utils.ts";
 
 const createStream = async function* (...args: any) {
   for (const item of args) {
@@ -12,8 +13,8 @@ const N = 10;
 describe("shared instances", () => {
   context("encode() and decodeSync()", () => {
     it("runs multiple times", () => {
-      const encoder = new Encoder();
-      const decoder = new Decoder();
+      const encoder = new Encoder(pctrl());
+      const decoder = new Decoder(uctrl());
 
       const object = {
         nil: null,
@@ -23,7 +24,7 @@ describe("shared instances", () => {
         binary: Uint8Array.from([1, 2, 3]),
         array: [10, 20, 30],
         map: { foo: "bar" },
-        timestampExt: new Date(),
+        nested: { level: 1, enabled: true },
       };
 
       for (let i = 0; i < N; i++) {
@@ -35,8 +36,8 @@ describe("shared instances", () => {
 
   context("encode() and decodeAsync()", () => {
     it("runs multiple times", async () => {
-      const encoder = new Encoder();
-      const decoder = new Decoder();
+      const encoder = new Encoder(pctrl());
+      const decoder = new Decoder(uctrl());
 
       const object = {
         nil: null,
@@ -46,7 +47,7 @@ describe("shared instances", () => {
         binary: Uint8Array.from([1, 2, 3]),
         array: [10, 20, 30],
         map: { foo: "bar" },
-        timestampExt: new Date(),
+        nested: { level: 1, enabled: true },
       };
 
       for (let i = 0; i < N; i++) {
@@ -58,8 +59,8 @@ describe("shared instances", () => {
 
   context("encode() and decodeStream()", () => {
     it("runs multiple times", async () => {
-      const encoder = new Encoder();
-      const decoder = new Decoder();
+      const encoder = new Encoder(pctrl());
+      const decoder = new Decoder(uctrl());
 
       const object = {
         nil: null,
@@ -69,7 +70,7 @@ describe("shared instances", () => {
         binary: Uint8Array.from([1, 2, 3]),
         array: [10, 20, 30],
         map: { foo: "bar" },
-        timestampExt: new Date(),
+        nested: { level: 1, enabled: true },
       };
 
       for (let i = 0; i < N; i++) {
@@ -85,8 +86,8 @@ describe("shared instances", () => {
 
   context("encode() and decodeArrayStream()", () => {
     it("runs multiple times", async () => {
-      const encoder = new Encoder();
-      const decoder = new Decoder();
+      const encoder = new Encoder(pctrl());
+      const decoder = new Decoder(uctrl());
 
       const object = {
         nil: null,
@@ -96,7 +97,7 @@ describe("shared instances", () => {
         binary: Uint8Array.from([1, 2, 3]),
         array: [10, 20, 30],
         map: { foo: "bar" },
-        timestampExt: new Date(),
+        nested: { level: 1, enabled: true },
       };
 
       for (let i = 0; i < N; i++) {
@@ -111,8 +112,8 @@ describe("shared instances", () => {
 
     context("regression #212", () => {
       it("runs multiple times", () => {
-        const encoder = new Encoder();
-        const decoder = new Decoder();
+        const encoder = new Encoder(pctrl());
+        const decoder = new Decoder(uctrl());
 
         const data1 = {
           isCommunication: false,
@@ -141,12 +142,12 @@ describe("shared instances", () => {
 
     context("Encoder#encodeSharedRef()", () => {
       it("returns the shared reference", () => {
-        const encoder = new Encoder();
+        const encoder = new Encoder(pctrl());
 
         const a = encoder.encodeSharedRef(true);
         const b = encoder.encodeSharedRef(false);
 
-        deepStrictEqual(decode(a), decode(b)); // yes, this is the expected behavior
+        deepStrictEqual(decode(a, uctrl()), decode(b, uctrl())); // yes, this is the expected behavior
         deepStrictEqual(a.buffer, b.buffer);
       });
     });

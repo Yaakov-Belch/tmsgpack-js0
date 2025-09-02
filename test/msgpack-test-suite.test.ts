@@ -1,26 +1,8 @@
 import assert from "assert";
 import util from "util";
 import { Exam } from "msgpack-test-js";
-import { MsgTimestamp } from "msg-timestamp";
-import { encode, decode, ExtensionCodec, EXT_TIMESTAMP, encodeTimeSpecToTimestamp } from "../src/index.ts";
-
-const extensionCodec = new ExtensionCodec();
-extensionCodec.register({
-  type: EXT_TIMESTAMP,
-  encode: (input) => {
-    if (input instanceof MsgTimestamp) {
-      return encodeTimeSpecToTimestamp({
-        sec: input.getTime(),
-        nsec: input.getNano(),
-      });
-    } else {
-      return null;
-    }
-  },
-  decode: (data: Uint8Array) => {
-    return MsgTimestamp.parse(Buffer.from(data));
-  },
-});
+import { encode, decode } from "../src/index.ts";
+import { pctrl, uctrl } from "./test-utils.ts";
 
 const TEST_TYPES = {
   array: 1,
@@ -31,7 +13,6 @@ const TEST_TYPES = {
   nil: 1,
   number: 1,
   string: 1,
-  timestamp: 1,
 };
 
 describe("msgpack-test-suite", () => {
@@ -42,7 +23,7 @@ describe("msgpack-test-suite", () => {
     it(`encodes ${title}`, () => {
       types.forEach((type) => {
         const value = exam.getValue(type);
-        const buffer = Buffer.from(encode(value, { extensionCodec }));
+        const buffer = Buffer.from(encode(value, pctrl()));
 
         if (exam.matchMsgpack(buffer)) {
           assert(true, exam.stringify(type));
@@ -58,7 +39,7 @@ describe("msgpack-test-suite", () => {
     it(`decodes ${title}`, () => {
       const msgpacks = exam.getMsgpacks();
       msgpacks.forEach((encoded, idx) => {
-        const value = decode(encoded, { extensionCodec });
+        const value = decode(encoded, uctrl());
         if (exam.matchValue(value)) {
           assert(true, exam.stringify(idx));
         } else {
@@ -105,15 +86,15 @@ describe("msgpack-test-suite", () => {
       const value = SPECS[name];
 
       it(`encodes and decodes ${name}`, () => {
-        const encoded = encode(value);
-        assert.deepStrictEqual(decode(new Uint8Array(encoded)), value);
+        const encoded = encode(value, pctrl());
+        assert.deepStrictEqual(decode(new Uint8Array(encoded), uctrl()), value);
       });
     }
   });
 
   describe("encoding in minimum values", () => {
     it("int 8", () => {
-      assert.deepStrictEqual(encode(-128), Uint8Array.from([0xd0, 0x80]));
+      assert.deepStrictEqual(encode(-128, pctrl()), Uint8Array.from([0xd0, 0x80]));
     });
   });
 });

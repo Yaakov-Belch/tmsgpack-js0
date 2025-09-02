@@ -1,5 +1,6 @@
 import assert from "assert";
 import { encode, decodeMulti } from "../src/index.ts";
+import { pctrl, uctrl } from "./test-utils.ts";
 
 describe("decodeMulti", () => {
   it("decodes multiple objects in a single binary", () => {
@@ -12,7 +13,7 @@ describe("decodeMulti", () => {
       [1, 2, 3],
     ];
 
-    const encodedItems = items.map((item) => encode(item));
+    const encodedItems = items.map((item) => encode(item, pctrl()));
     const encoded = new Uint8Array(encodedItems.reduce((p, c) => p + c.byteLength, 0));
     let offset = 0;
     for (const encodedItem of encodedItems) {
@@ -22,7 +23,7 @@ describe("decodeMulti", () => {
 
     const result: Array<unknown> = [];
 
-    for (const item of decodeMulti(encoded)) {
+    for (const item of decodeMulti(encoded, uctrl())) {
       result.push(item);
     }
 

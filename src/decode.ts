@@ -12,9 +12,9 @@ import type { UnpackCtrl } from "./index.ts";
  */
 export function decode(
   buffer: ArrayLike<number> | ArrayBufferView | ArrayBufferLike,
-  unpack_ctrl: UnpackCtrl,
+  unpackCtrl: UnpackCtrl,
 ): unknown {
-  const decoder = new Decoder(unpack_ctrl);
+  const decoder = new Decoder(unpackCtrl);
   return decoder.decode(buffer);
 }
 
@@ -27,8 +27,8 @@ export function decode(
  */
 export function decodeMulti(
   buffer: ArrayLike<number> | BufferSource,
-  unpack_ctrl: UnpackCtrl,
+  unpackCtrl: UnpackCtrl,
 ): Generator<unknown, void, unknown> {
-  const decoder = new Decoder(unpack_ctrl);
+  const decoder = new Decoder(unpackCtrl);
   return decoder.decodeMulti(buffer);
 }

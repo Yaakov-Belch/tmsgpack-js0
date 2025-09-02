@@ -67,7 +67,7 @@ export type EncoderOptions = Partial<
 >;
 
 export class Encoder {
-  private readonly pack_ctrl: PackCtrl;
+  private readonly packCtrl: PackCtrl;
   private readonly useBigInt64: boolean;
   private readonly maxDepth: number;
   private readonly initialBufferSize: number;
@@ -82,16 +82,16 @@ export class Encoder {
 
   private entered = false;
 
-  public constructor(pack_ctrl: PackCtrl) {
-    const options = pack_ctrl.options;
-    this.pack_ctrl = pack_ctrl;
-    this.useBigInt64 = options?.useBigInt64 ?? false;
-    this.maxDepth = options?.maxDepth ?? DEFAULT_MAX_DEPTH;
-    this.initialBufferSize = options?.initialBufferSize ?? DEFAULT_INITIAL_BUFFER_SIZE;
-    this.sortKeys = options?.sortKeys ?? false;
-    this.forceFloat32 = options?.forceFloat32 ?? false;
-    this.ignoreUndefined = options?.ignoreUndefined ?? false;
-    this.forceIntegerToFloat = options?.forceIntegerToFloat ?? false;
+  public constructor(packCtrl: PackCtrl) {
+    const options = packCtrl.options;
+    this.packCtrl = packCtrl;
+    this.useBigInt64 = options.useBigInt64 ?? false;
+    this.maxDepth = options.maxDepth ?? DEFAULT_MAX_DEPTH;
+    this.initialBufferSize = options.initialBufferSize ?? DEFAULT_INITIAL_BUFFER_SIZE;
+    this.sortKeys = options.sortKeys ?? false;
+    this.forceFloat32 = options.forceFloat32 ?? false;
+    this.ignoreUndefined = options.ignoreUndefined ?? false;
+    this.forceIntegerToFloat = options.forceIntegerToFloat ?? false;
 
     this.pos = 0;
     this.view = new DataView(new ArrayBuffer(this.initialBufferSize));
@@ -99,7 +99,7 @@ export class Encoder {
   }
 
   private clone() {
-    return new Encoder(this.pack_ctrl);
+    return new Encoder(this.packCtrl);
   }
 
   private reinitializeState() {
@@ -320,11 +320,11 @@ export class Encoder {
     } else if (this.isPlainMap(object)) {
       this.encodeMap(object as Record<string, unknown>, null, depth);
     } else {
-      const [as_dict, object_type, data] = this.pack_ctrl.from_obj(object);
-      if (as_dict) {
-        this.encodeMap(data as Record<string, unknown>, object_type, depth);
+      const [asDict, objectType, data] = this.packCtrl.fromObj(object);
+      if (asDict) {
+        this.encodeMap(data as Record<string, unknown>, objectType, depth);
       } else {
-        this.encodeArray(data, object_type, depth);
+        this.encodeArray(data as Array<unknown>, objectType, depth);
       }
     }
   }
@@ -355,7 +355,7 @@ export class Encoder {
     this.writeU8a(bytes);
   }
 
-  private encodeArray(object: Array<unknown>, object_type: unknown, depth: number) {
+  private encodeArray(object: Array<unknown>, objectType: unknown, depth: number) {
     const size = object.length;
     if (size < 16) {
       // fixarray
@@ -371,7 +371,7 @@ export class Encoder {
     } else {
       throw new Error(`Too large array: ${size}`);
     }
-    this.doEncode(object_type, depth + 1);
+    this.doEncode(objectType, depth + 1);
     for (const item of object) {
       this.doEncode(item, depth + 1);
     }
@@ -389,7 +389,7 @@ export class Encoder {
     return count;
   }
 
-  private encodeMap(object: Record<string, unknown>, object_type: unknown, depth: number) {
+  private encodeMap(object: Record<string, unknown>, objectType: unknown, depth: number) {
     const keys = Object.keys(object);
     if (this.sortKeys) {
       keys.sort();
@@ -412,7 +412,7 @@ export class Encoder {
       throw new Error(`Too large map object: ${size}`);
     }
 
-    this.doEncode(object_type, depth + 1);
+    this.doEncode(objectType, depth + 1);
 
     for (const key of keys) {
       const value = object[key];

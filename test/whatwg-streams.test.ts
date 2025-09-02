@@ -1,5 +1,6 @@
 import { deepStrictEqual } from "assert";
 import { decodeAsync, encode, decodeArrayStream } from "../src/index.ts";
+import { pctrl, uctrl } from "./test-utils.ts";
 
 const isReadableStreamConstructorAvailable: boolean = (() => {
   try {
@@ -21,7 +22,7 @@ function downgradeReadableStream(stream: ReadableStream) {
 (isReadableStreamConstructorAvailable ? describe : describe.skip)("whatwg streams", () => {
   it("decodeArrayStream", async () => {
     const data = [1, 2, 3];
-    const encoded = encode(data);
+    const encoded = encode(data, pctrl());
     const stream = new ReadableStream({
       start(controller) {
         for (const byte of encoded) {
@@ -33,7 +34,7 @@ function downgradeReadableStream(stream: ReadableStream) {
     downgradeReadableStream(stream);
 
     const items: Array<unknown> = [];
-    for await (const item of decodeArrayStream(stream)) {
+    for await (const item of decodeArrayStream(stream, uctrl())) {
       items.push(item);
     }
     deepStrictEqual(items, data);
@@ -41,7 +42,7 @@ function downgradeReadableStream(stream: ReadableStream) {
 
   it("decodeAsync", async () => {
     const data = [1, 2, 3];
-    const encoded = encode(data);
+    const encoded = encode(data, pctrl());
     const stream = new ReadableStream({
       start(controller) {
         for (const byte of encoded) {
@@ -52,6 +53,6 @@ function downgradeReadableStream(stream: ReadableStream) {
     });
     downgradeReadableStream(stream);
 
-    deepStrictEqual(await decodeAsync(stream), data);
+    deepStrictEqual(await decodeAsync(stream, uctrl()), data);
   });
 });

@@ -1,12 +1,13 @@
 import assert from "assert";
 import { encode, decode } from "../src/index.ts";
 import type { DecoderOptions } from "../src/index.ts";
+import { pctrl, uctrl } from "./test-utils.ts";
 
 describe("decode with rawStrings specified", () => {
   const options = { rawStrings: true } satisfies DecoderOptions;
 
   it("decodes string as binary", () => {
-    const actual = decode(encode("foo"), options);
+    const actual = decode(encode("foo", pctrl()), uctrl(options));
     const expected = Uint8Array.from([0x66, 0x6f, 0x6f]);
     assert.deepStrictEqual(actual, expected);
   });
@@ -21,12 +22,12 @@ describe("decode with rawStrings specified", () => {
       176, 184, 221, 66, 188, 171, 36, 135, 121,
     ]);
 
-    const actual = decode(encoded, options);
+    const actual = decode(encoded, uctrl(options));
     assert.deepStrictEqual(actual, invalidUtf8String);
   });
 
   it("decodes object keys as strings", () => {
-    const actual = decode(encode({ key: "foo" }), options);
+    const actual = decode(encode({ key: "foo" }, pctrl()), uctrl(options));
     const expected = { key: Uint8Array.from([0x66, 0x6f, 0x6f]) };
     assert.deepStrictEqual(actual, expected);
   });
@@ -34,7 +35,7 @@ describe("decode with rawStrings specified", () => {
   it("ignores maxStrLength", () => {
     const lengthLimitedOptions = { ...options, maxStrLength: 1 } satisfies DecoderOptions;
 
-    const actual = decode(encode("foo"), lengthLimitedOptions);
+    const actual = decode(encode("foo", pctrl()), uctrl(lengthLimitedOptions));
     const expected = Uint8Array.from([0x66, 0x6f, 0x6f]);
     assert.deepStrictEqual(actual, expected);
   });
@@ -43,7 +44,7 @@ describe("decode with rawStrings specified", () => {
     const lengthLimitedOptions = { ...options, maxBinLength: 1 } satisfies DecoderOptions;
 
     assert.throws(() => {
-      decode(encode("foo"), lengthLimitedOptions);
+      decode(encode("foo", pctrl()), uctrl(lengthLimitedOptions));
     }, /max length exceeded/i);
   });
 });

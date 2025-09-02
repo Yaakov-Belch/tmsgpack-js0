@@ -1,5 +1,6 @@
 import assert from "assert";
 import { encode, decodeMultiStream } from "../src/index.ts";
+import { pctrl, uctrl } from "./test-utils.ts";
 
 describe("decodeStream", () => {
   it("decodes stream", async () => {
@@ -14,13 +15,13 @@ describe("decodeStream", () => {
 
     const createStream = async function* (): AsyncGenerator<Uint8Array> {
       for (const item of items) {
-        yield encode(item);
+        yield encode(item, pctrl());
       }
     };
 
     const result: Array<unknown> = [];
 
-    for await (const item of decodeMultiStream(createStream())) {
+    for await (const item of decodeMultiStream(createStream(), uctrl())) {
       result.push(item);
     }
 
@@ -37,7 +38,7 @@ describe("decodeStream", () => {
       [1, 2, 3],
     ];
 
-    const encodedItems = items.map((item) => encode(item));
+    const encodedItems = items.map((item) => encode(item, pctrl()));
     const encoded = new Uint8Array(encodedItems.reduce((p, c) => p + c.byteLength, 0));
     let offset = 0;
     for (const encodedItem of encodedItems) {
@@ -51,7 +52,7 @@ describe("decodeStream", () => {
 
     const result: Array<unknown> = [];
 
-    for await (const item of decodeMultiStream(createStream())) {
+    for await (const item of decodeMultiStream(createStream(), uctrl())) {
       result.push(item);
     }
 

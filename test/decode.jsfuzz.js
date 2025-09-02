@@ -1,13 +1,14 @@
 /* eslint-disable */
 const assert = require("node:assert");
 const { Decoder, encode, DecodeError } = require("../dist/index.js");
+import { pctrl, uctrl } from "./test-utils.ts";
 
 /**
  * @param {Buffer} bytes
  * @returns {void}
  */
 module.exports.fuzz = function fuzz(bytes) {
-  const decoder = new Decoder();
+  const decoder = new Decoder(uctrl());
   try {
     decoder.decode(bytes);
   } catch (e) {
@@ -26,5 +27,5 @@ module.exports.fuzz = function fuzz(bytes) {
     bar: 2,
     baz: ["one", "two", "three"],
   };
-  assert.deepStrictEqual(decoder.decode(encode(object)), object);
+  assert.deepStrictEqual(decoder.decode(encode(object, pctrl())), object);
 }

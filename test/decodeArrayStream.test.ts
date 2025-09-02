@@ -1,5 +1,6 @@
 import assert from "assert";
 import { encode, decodeArrayStream } from "../src/index.ts";
+import { pctrl, uctrl } from "./test-utils.ts";
 
 describe("decodeArrayStream", () => {
   const generateSampleObject = () => {
@@ -10,7 +11,7 @@ describe("decodeArrayStream", () => {
   };
 
   const createStream = async function* (object: any) {
-    for (const byte of encode(object)) {
+    for (const byte of encode(object, pctrl())) {
       yield [byte];
     }
   };
@@ -20,7 +21,7 @@ describe("decodeArrayStream", () => {
 
     const result: Array<unknown> = [];
 
-    for await (const item of decodeArrayStream(createStream(object))) {
+    for await (const item of decodeArrayStream(createStream(object), uctrl())) {
       result.push(item);
     }
 
@@ -30,14 +31,14 @@ describe("decodeArrayStream", () => {
   it("decodes numbers of array (array16)", async () => {
     const createStream = async function* () {
       yield [0xdc, 0, 3];
-      yield encode(1);
-      yield encode(2);
-      yield encode(3);
+      yield encode(1, pctrl());
+      yield encode(2, pctrl());
+      yield encode(3, pctrl());
     };
 
     const result: Array<unknown> = [];
 
-    for await (const item of decodeArrayStream(createStream())) {
+    for await (const item of decodeArrayStream(createStream(), uctrl())) {
       result.push(item);
     }
 
@@ -47,14 +48,14 @@ describe("decodeArrayStream", () => {
   it("decodes numbers of array (array32)", async () => {
     const createStream = async function* () {
       yield [0xdd, 0, 0, 0, 3];
-      yield encode(1);
-      yield encode(2);
-      yield encode(3);
+      yield encode(1, pctrl());
+      yield encode(2, pctrl());
+      yield encode(3, pctrl());
     };
 
     const result: Array<unknown> = [];
 
-    for await (const item of decodeArrayStream(createStream())) {
+    for await (const item of decodeArrayStream(createStream(), uctrl())) {
       result.push(item);
     }
 
@@ -70,7 +71,7 @@ describe("decodeArrayStream", () => {
 
     const result: Array<unknown> = [];
 
-    for await (const item of decodeArrayStream(createStream(objectsArrays))) {
+    for await (const item of decodeArrayStream(createStream(objectsArrays), uctrl())) {
       result.push(item);
     }
 
@@ -83,7 +84,7 @@ describe("decodeArrayStream", () => {
     await assert.rejects(async () => {
       const result: Array<unknown> = [];
 
-      for await (const item of decodeArrayStream(createStream(object))) {
+      for await (const item of decodeArrayStream(createStream(object), uctrl())) {
         result.push(item);
       }
     }, /.*Unrecognized array type byte:.*/i);

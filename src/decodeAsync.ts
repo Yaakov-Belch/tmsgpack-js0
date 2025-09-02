@@ -8,10 +8,10 @@ import type { ReadableStreamLike } from "./utils/stream.ts";
  */
 export async function decodeAsync(
   streamLike: ReadableStreamLike<ArrayLike<number> | BufferSource>,
-  unpack_ctrl: UnpackCtrl,
+  unpackCtrl: UnpackCtrl,
 ): Promise<unknown> {
   const stream = ensureAsyncIterable(streamLike);
-  const decoder = new Decoder(unpack_ctrl);
+  const decoder = new Decoder(unpackCtrl);
   return decoder.decodeAsync(stream);
 }
 
@@ -21,10 +21,10 @@ export async function decodeAsync(
  */
 export function decodeArrayStream(
   streamLike: ReadableStreamLike<ArrayLike<number> | BufferSource>,
-  unpack_ctrl: UnpackCtrl,
+  unpackCtrl: UnpackCtrl,
 ): AsyncGenerator<unknown, void, unknown> {
   const stream = ensureAsyncIterable(streamLike);
-  const decoder = new Decoder(unpack_ctrl);
+  const decoder = new Decoder(unpackCtrl);
   return decoder.decodeArrayStream(stream);
 }
 
@@ -34,9 +34,9 @@ export function decodeArrayStream(
  */
 export function decodeMultiStream(
   streamLike: ReadableStreamLike<ArrayLike<number> | BufferSource>,
-  unpack_ctrl: UnpackCtrl,
+  unpackCtrl: UnpackCtrl,
 ): AsyncGenerator<unknown, void, unknown> {
   const stream = ensureAsyncIterable(streamLike);
-  const decoder = new Decoder(unpack_ctrl);
+  const decoder = new Decoder(unpackCtrl);
   return decoder.decodeStream(stream);
 }

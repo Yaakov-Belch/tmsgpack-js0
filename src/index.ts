@@ -17,8 +17,8 @@ import { DecodeError } from "./DecodeError.ts";
 export { DecodeError };
 
 export interface UnpackCtrl {
-  from_dict(object_type: unknown, data: Record<string, unknown>): unknown;
-  from_list(object_type: unknown, data: Array<unknown>): unknown;
+  fromDict(objectType: unknown, data: Record<string, unknown>): unknown;
+  fromList(objectType: unknown, data: Array<unknown>): unknown;
   options: DecoderOptions;
 }
 
@@ -28,6 +28,6 @@ import type { EncoderOptions } from "./Encoder.ts";
 export type { EncoderOptions };
 
 export interface PackCtrl {
-  from_obj(object: unknown): [boolean, unknown, unknown]; // [as_dict, object_type, data]
+  fromObj(object: unknown): [boolean, unknown, unknown]; // [asDict, objectType, data]
   options: EncoderOptions;
 }

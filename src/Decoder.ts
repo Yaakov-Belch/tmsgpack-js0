@@ -5,6 +5,7 @@ import { ensureUint8Array } from "./utils/typedArrays.ts";
 import { CachedKeyDecoder } from "./CachedKeyDecoder.ts";
 import { DecodeError } from "./DecodeError.ts";
 import type { KeyDecoder } from "./CachedKeyDecoder.ts";
+import type { UnpackCtrl } from "./index.ts";
 
 export type DecoderOptions = Readonly<
   Partial<{
@@ -84,7 +85,7 @@ const mapKeyConverter = (key: unknown): MapKeyType => {
 type StackMapState = {
   type: typeof STATE_MAP_KEY | typeof STATE_MAP_VALUE;
   size: number;
-  object_type: unknown;
+  objectType: unknown;
   key: MapKeyType | null;
   readCount: number;
   map: Record<string, unknown>;
@@ -93,7 +94,7 @@ type StackMapState = {
 type StackArrayState = {
   type: typeof STATE_ARRAY;
   size: number;
-  object_type: unknown;
+  objectType: unknown;
   array: Array<unknown>;
   position: number;
 };
@@ -117,7 +118,7 @@ class StackPool {
     state.position = -1;
     state.size = size;
     state.array = new Array(size);
-    state.object_type = null;
+    state.objectType = null;
   }
 
   public pushMapState(size: number) {
@@ -127,7 +128,7 @@ class StackPool {
     state.readCount = -1;
     state.size = size;
     state.map = {};
-    state.object_type = null;
+    state.objectType = null;
   }
 
   private getUninitializedStateFromPool() {
@@ -206,7 +207,7 @@ const MORE_DATA = new RangeError("Insufficient data");
 const sharedCachedKeyDecoder = new CachedKeyDecoder();
 
 export class Decoder {
-  private readonly unpack_ctrl: UnpackCtrl;
+  private readonly unpackCtrl: UnpackCtrl;
   private readonly useBigInt64: boolean;
   private readonly rawStrings: boolean;
   private readonly maxStrLength: number;
@@ -226,21 +227,21 @@ export class Decoder {
 
   private entered = false;
 
-  public constructor(unpack_ctrl: UnpackCtrl) {
-    const options = unpack_ctrl.options;
-    this.unpack_ctrl = unpack_ctrl;
-    this.useBigInt64 = options?.useBigInt64 ?? false;
-    this.rawStrings = options?.rawStrings ?? false;
-    this.maxStrLength = options?.maxStrLength ?? UINT32_MAX;
-    this.maxBinLength = options?.maxBinLength ?? UINT32_MAX;
-    this.maxArrayLength = options?.maxArrayLength ?? UINT32_MAX;
-    this.maxMapLength = options?.maxMapLength ?? UINT32_MAX;
-    this.keyDecoder = options?.keyDecoder !== undefined ? options.keyDecoder : sharedCachedKeyDecoder;
-    this.mapKeyConverter = options?.mapKeyConverter ?? mapKeyConverter;
+  public constructor(unpackCtrl: UnpackCtrl) {
+    const options = unpackCtrl.options;
+    this.unpackCtrl = unpackCtrl;
+    this.useBigInt64 = options.useBigInt64 ?? false;
+    this.rawStrings = options.rawStrings ?? false;
+    this.maxStrLength = options.maxStrLength ?? UINT32_MAX;
+    this.maxBinLength = options.maxBinLength ?? UINT32_MAX;
+    this.maxArrayLength = options.maxArrayLength ?? UINT32_MAX;
+    this.maxMapLength = options.maxMapLength ?? UINT32_MAX;
+    this.keyDecoder = options.keyDecoder !== undefined ? options.keyDecoder : sharedCachedKeyDecoder;
+    this.mapKeyConverter = options.mapKeyConverter ?? mapKeyConverter;
   }
 
   private clone(): Decoder {
-    return new Decoder(this.unpack_ctrl);
+    return new Decoder(this.unpackCtrl);
   }
 
   private reinitializeState() {
@@ -592,15 +593,15 @@ export class Decoder {
         const state = stack.top()!;
         if (state.type === STATE_ARRAY) {
           if (state.position === -1) {
-            state.object_type = object;
+            state.objectType = object;
           } else {
             state.array[state.position] = object;
           }
           state.position++;
           if (state.position === state.size) {
             object = state.array;
-            if (state.object_type !== null) {
-              object = this.unpack_ctrl.from_list(state.object_type, object);
+            if (state.objectType !== null) {
+              object = this.unpackCtrl.fromList(state.objectType, object as Array<unknown>);
             }
             stack.release(state);
           } else {
@@ -608,7 +609,7 @@ export class Decoder {
           }
         } else if (state.type === STATE_MAP_KEY) {
           if (state.readCount === -1) {
-            state.object_type = object;
+            state.objectType = object;
             state.readCount = 0;
           } else {
             if (object === "__proto__") {
@@ -627,8 +628,8 @@ export class Decoder {
 
           if (state.readCount === state.size) {
             object = state.map;
-            if (state.object_type !== null) {
-              object = this.unpack_ctrl.from_dict(state.object_type, object);
+            if (state.objectType !== null) {
+              object = this.unpackCtrl.fromDict(state.objectType, object as Record<string, unknown>);
             }
             stack.release(state);
           } else {

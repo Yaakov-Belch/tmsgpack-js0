@@ -1,5 +1,6 @@
 import { throws } from "assert";
 import { encode, decode, DecodeError } from "../src/index.ts";
+import { pctrl, uctrl } from "./test-utils.ts";
 
 describe("prototype pollution", () => {
   context("__proto__ exists as a map key", () => {
@@ -12,10 +13,10 @@ describe("prototype pollution", () => {
         value: new Date(0),
         enumerable: true,
       });
-      const encoded = encode(o);
+      const encoded = encode(o, pctrl());
 
       throws(() => {
-        decode(encoded);
+        decode(encoded, uctrl());
       }, DecodeError);
     });
   });
