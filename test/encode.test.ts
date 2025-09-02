@@ -72,4 +72,17 @@ describe("encode", () => {
     const arrayBuffer = buffer.buffer.slice(buffer.byteOffset, buffer.byteLength);
     assert.deepStrictEqual(decode(arrayBuffer, uctrl()), decode(buffer, uctrl()));
   });
+
+  context("empty structures", () => {
+    it("encodes and decodes empty array", () => {
+      console.log(encode([], pctrl()))
+      assert.deepStrictEqual(decode(encode([], pctrl()), uctrl()), []);
+    });
+
+    it("encodes and decodes empty object", () => {
+      console.log(encode({}, pctrl()))
+      assert.deepStrictEqual(decode(encode({}, pctrl()), uctrl()), {});
+    });
+  });
+
 });

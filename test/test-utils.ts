@@ -3,7 +3,7 @@ import type { PackCtrl, UnpackCtrl, EncoderOptions, DecoderOptions } from "../sr
 export function pctrl(options: Partial<EncoderOptions> = {}): PackCtrl {
   return {
     fromObj(_object: unknown): [boolean, unknown, unknown] {
-      throw new Error("fromObj should not be called in plain object tests");
+      throw new Error("unrecognized object");
     },
     options,
   };

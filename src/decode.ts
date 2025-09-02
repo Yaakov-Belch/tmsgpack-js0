@@ -5,7 +5,7 @@ import type { UnpackCtrl } from "./index.ts";
  * It decodes a single MessagePack object in a buffer.
  *
  * This is a synchronous decoding function.
- * See other variants for asynchronous decoding: {@link decodeAsync}, {@link decodeMultiStream}, or {@link decodeArrayStream}.
+ * See other variants for asynchronous decoding: {@link decodeAsync} or {@link decodeMultiStream}.
  *
  * @throws {@link RangeError} if the buffer is incomplete, including the case where the buffer is empty.
  * @throws {@link DecodeError} if the buffer contains invalid data.

@@ -6,8 +6,8 @@ export { encode };
 import { decode, decodeMulti } from "./decode.ts";
 export { decode, decodeMulti };
 
-import { decodeAsync, decodeArrayStream, decodeMultiStream } from "./decodeAsync.ts";
-export { decodeAsync, decodeArrayStream, decodeMultiStream };
+import { decodeAsync, decodeMultiStream } from "./decodeAsync.ts";
+export { decodeAsync, decodeMultiStream };
 
 import { Decoder } from "./Decoder.ts";
 export { Decoder };

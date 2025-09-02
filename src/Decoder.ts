@@ -377,12 +377,6 @@ export class Decoder {
     }
   }
 
-  public decodeArrayStream(
-    stream: AsyncIterable<ArrayLike<number> | ArrayBufferView | ArrayBufferLike>,
-  ): AsyncGenerator<unknown, void, unknown> {
-    return this.decodeMultiAsync(stream, true);
-  }
-
   public decodeStream(stream: AsyncIterable<ArrayLike<number> | ArrayBufferView | ArrayBufferLike>): AsyncGenerator<unknown, void, unknown> {
     return this.decodeMultiAsync(stream, false);
   }

@@ -84,7 +84,7 @@ describe("shared instances", () => {
     });
   });
 
-  context("encode() and decodeArrayStream()", () => {
+  context("encode() without decodeArrayStream()", () => {
     it("runs multiple times", async () => {
       const encoder = new Encoder(pctrl());
       const decoder = new Decoder(uctrl());

@@ -1,5 +1,5 @@
 import { deepStrictEqual } from "assert";
-import { decodeAsync, encode, decodeArrayStream } from "../src/index.ts";
+import { decodeAsync, encode } from "../src/index.ts";
 import { pctrl, uctrl } from "./test-utils.ts";
 
 const isReadableStreamConstructorAvailable: boolean = (() => {
@@ -20,26 +20,6 @@ function downgradeReadableStream(stream: ReadableStream) {
 }
 
 (isReadableStreamConstructorAvailable ? describe : describe.skip)("whatwg streams", () => {
-  it("decodeArrayStream", async () => {
-    const data = [1, 2, 3];
-    const encoded = encode(data, pctrl());
-    const stream = new ReadableStream({
-      start(controller) {
-        for (const byte of encoded) {
-          controller.enqueue([byte]);
-        }
-        controller.close();
-      },
-    });
-    downgradeReadableStream(stream);
-
-    const items: Array<unknown> = [];
-    for await (const item of decodeArrayStream(stream, uctrl())) {
-      items.push(item);
-    }
-    deepStrictEqual(items, data);
-  });
-
   it("decodeAsync", async () => {
     const data = [1, 2, 3];
     const encoded = encode(data, pctrl());

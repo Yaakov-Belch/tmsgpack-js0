@@ -19,7 +19,7 @@ describe("decodeAsync", () => {
   it("decodes fixarray [nil]", async () => {
     const createStream = async function* () {
       yield wrapWithNoisyBuffer(0x91); // fixarray size=1
-      yield [0xc0]; // nil
+      yield [0xc0, 0xc0]; // nil
     };
 
     const object = await decodeAsync(createStream(), uctrl());
@@ -28,7 +28,7 @@ describe("decodeAsync", () => {
 
   it("decodes fixmap {'foo': 'bar'}", async () => {
     const createStream = async function* () {
-      yield [0x81]; // fixmap size=1
+      yield [0x81, 0xc0]; // fixmap size=1
       yield encode("foo", pctrl());
       yield encode("bar", pctrl());
     };
@@ -39,7 +39,7 @@ describe("decodeAsync", () => {
 
   it("decodes fixmap {'[1, 2]': 'baz'} with custom map key converter", async () => {
     const createStream = async function* () {
-      yield [0x81]; // fixmap size=1
+      yield [0x81, 0xc0]; // fixmap size=1
       yield encode([1, 2], pctrl());
       yield encode("baz", pctrl());
     };
@@ -127,7 +127,7 @@ describe("decodeAsync", () => {
   it("decodes BufferSource", async () => {
     // https://developer.mozilla.org/en-US/docs/Web/API/BufferSource
     const createStream = async function* () {
-      yield [0x81] as ArrayLike<number>; // fixmap size=1
+      yield [0x81, 0xc0] as ArrayLike<number>; // fixmap size=1
       yield encode("foo", pctrl()) as BufferSource;
       yield encode("bar", pctrl()) as BufferSource;
     };

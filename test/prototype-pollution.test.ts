@@ -10,7 +10,7 @@ describe("prototype pollution", () => {
       };
       // override __proto__ as an enumerable property
       Object.defineProperty(o, "__proto__", {
-        value: new Date(0),
+        value: { malicious: "payload" },
         enumerable: true,
       });
       const encoded = encode(o, pctrl());
