@@ -21,28 +21,9 @@ export { Encoder };
 import type { EncoderOptions } from "./Encoder.ts";
 export type { EncoderOptions };
 
-// Utilities for Extension Types:
-
-import { ExtensionCodec } from "./ExtensionCodec.ts";
-export { ExtensionCodec };
-import type { ExtensionCodecType, ExtensionDecoderType, ExtensionEncoderType } from "./ExtensionCodec.ts";
-export type { ExtensionCodecType, ExtensionDecoderType, ExtensionEncoderType };
-import { ExtData } from "./ExtData.ts";
-export { ExtData };
-
-import {
-  EXT_TIMESTAMP,
-  encodeDateToTimeSpec,
-  encodeTimeSpecToTimestamp,
-  decodeTimestampToTimeSpec,
-  encodeTimestampExtension,
-  decodeTimestampExtension,
-} from "./timestamp.ts";
-export {
-  EXT_TIMESTAMP,
-  encodeDateToTimeSpec,
-  encodeTimeSpecToTimestamp,
-  decodeTimestampToTimeSpec,
-  encodeTimestampExtension,
-  decodeTimestampExtension,
-};
+// PackCtrl Interface:
+export interface PackCtrl {
+  from_obj(object: unknown): [boolean, unknown, unknown]; // [as_dict, object_type,
+data]
+  options: EncoderOptions;
+}

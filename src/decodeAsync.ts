@@ -2,15 +2,13 @@ import { Decoder } from "./Decoder.ts";
 import { ensureAsyncIterable } from "./utils/stream.ts";
 import type { DecoderOptions } from "./Decoder.ts";
 import type { ReadableStreamLike } from "./utils/stream.ts";
-import type { SplitUndefined } from "./context.ts";
-
 /**
  * @throws {@link RangeError} if the buffer is incomplete, including the case where the buffer is empty.
  * @throws {@link DecodeError} if the buffer contains invalid data.
  */
-export async function decodeAsync<ContextType = undefined>(
+export async function decodeAsync(
   streamLike: ReadableStreamLike<ArrayLike<number> | BufferSource>,
-  options?: DecoderOptions<SplitUndefined<ContextType>>,
+  options?: DecoderOptions,
 ): Promise<unknown> {
   const stream = ensureAsyncIterable(streamLike);
   const decoder = new Decoder(options);
@@ -21,9 +19,9 @@ export async function decodeAsync<ContextType = undefined>(
  * @throws {@link RangeError} if the buffer is incomplete, including the case where the buffer is empty.
  * @throws {@link DecodeError} if the buffer contains invalid data.
  */
-export function decodeArrayStream<ContextType>(
+export function decodeArrayStream(
   streamLike: ReadableStreamLike<ArrayLike<number> | BufferSource>,
-  options?: DecoderOptions<SplitUndefined<ContextType>>,
+  options?: DecoderOptions,
 ): AsyncGenerator<unknown, void, unknown> {
   const stream = ensureAsyncIterable(streamLike);
   const decoder = new Decoder(options);
@@ -34,9 +32,9 @@ export function decodeArrayStream<ContextType>(
  * @throws {@link RangeError} if the buffer is incomplete, including the case where the buffer is empty.
  * @throws {@link DecodeError} if the buffer contains invalid data.
  */
-export function decodeMultiStream<ContextType>(
+export function decodeMultiStream(
   streamLike: ReadableStreamLike<ArrayLike<number> | BufferSource>,
-  options?: DecoderOptions<SplitUndefined<ContextType>>,
+  options?: DecoderOptions,
 ): AsyncGenerator<unknown, void, unknown> {
   const stream = ensureAsyncIterable(streamLike);
   const decoder = new Decoder(options);

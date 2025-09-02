@@ -1,6 +1,5 @@
 import { Decoder } from "./Decoder.ts";
 import type { DecoderOptions } from "./Decoder.ts";
-import type { SplitUndefined } from "./context.ts";
 
 /**
  * It decodes a single MessagePack object in a buffer.
@@ -11,9 +10,9 @@ import type { SplitUndefined } from "./context.ts";
  * @throws {@link RangeError} if the buffer is incomplete, including the case where the buffer is empty.
  * @throws {@link DecodeError} if the buffer contains invalid data.
  */
-export function decode<ContextType = undefined>(
+export function decode(
   buffer: ArrayLike<number> | ArrayBufferView | ArrayBufferLike,
-  options?: DecoderOptions<SplitUndefined<ContextType>>,
+  options?: DecoderOptions,
 ): unknown {
   const decoder = new Decoder(options);
   return decoder.decode(buffer);
@@ -26,9 +25,9 @@ export function decode<ContextType = undefined>(
  * @throws {@link RangeError} if the buffer is incomplete, including the case where the buffer is empty.
  * @throws {@link DecodeError} if the buffer contains invalid data.
  */
-export function decodeMulti<ContextType = undefined>(
+export function decodeMulti(
   buffer: ArrayLike<number> | BufferSource,
-  options?: DecoderOptions<SplitUndefined<ContextType>>,
+  options?: DecoderOptions,
 ): Generator<unknown, void, unknown> {
   const decoder = new Decoder(options);
   return decoder.decodeMulti(buffer);

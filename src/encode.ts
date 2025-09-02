@@ -1,6 +1,5 @@
 import { Encoder } from "./Encoder.ts";
-import type { EncoderOptions } from "./Encoder.ts";
-import type { SplitUndefined } from "./context.ts";
+import type { PackCtrl } from "./index.ts";
 
 /**
  * It encodes `value` in the MessagePack format and
@@ -8,10 +7,10 @@ import type { SplitUndefined } from "./context.ts";
  *
  * The returned buffer is a slice of a larger `ArrayBuffer`, so you have to use its `#byteOffset` and `#byteLength` in order to convert it to another typed arrays including NodeJS `Buffer`.
  */
-export function encode<ContextType = undefined>(
+export function encode(
   value: unknown,
-  options?: EncoderOptions<SplitUndefined<ContextType>>,
+  pack_ctrl: PackCtrl,
 ): Uint8Array {
-  const encoder = new Encoder(options);
+  const encoder = new Encoder(pack_ctrl);
   return encoder.encodeSharedRef(value);
 }

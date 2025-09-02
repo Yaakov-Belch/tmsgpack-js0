@@ -1,18 +1,12 @@
 import { utf8Count, utf8Encode } from "./utils/utf8.ts";
-import { ExtensionCodec } from "./ExtensionCodec.ts";
 import { setInt64, setUint64 } from "./utils/int.ts";
 import { ensureUint8Array } from "./utils/typedArrays.ts";
-import type { ExtData } from "./ExtData.ts";
-import type { ContextOf } from "./context.ts";
-import type { ExtensionCodecType } from "./ExtensionCodec.ts";
 
 export const DEFAULT_MAX_DEPTH = 100;
 export const DEFAULT_INITIAL_BUFFER_SIZE = 2048;
 
-export type EncoderOptions<ContextType = undefined> = Partial<
+export type EncoderOptions = Partial<
   Readonly<{
-    extensionCodec: ExtensionCodecType<ContextType>;
-
     /**
      * Encodes bigint as Int64 or Uint64 if it's set to true.
      * {@link forceIntegerToFloat} does not affect bigint.
@@ -69,12 +63,10 @@ export type EncoderOptions<ContextType = undefined> = Partial<
      */
     forceIntegerToFloat: boolean;
   }>
-> &
-  ContextOf<ContextType>;
+>;
 
-export class Encoder<ContextType = undefined> {
-  private readonly extensionCodec: ExtensionCodecType<ContextType>;
-  private readonly context: ContextType;
+export class Encoder {
+  private readonly pack_ctrl: PackCtrl;
   private readonly useBigInt64: boolean;
   private readonly maxDepth: number;
   private readonly initialBufferSize: number;
@@ -89,10 +81,9 @@ export class Encoder<ContextType = undefined> {
 
   private entered = false;
 
-  public constructor(options?: EncoderOptions<ContextType>) {
-    this.extensionCodec = options?.extensionCodec ?? (ExtensionCodec.defaultCodec as ExtensionCodecType<ContextType>);
-    this.context = (options as { context: ContextType } | undefined)?.context as ContextType; // needs a type assertion because EncoderOptions has no context property when ContextType is undefined
-
+  public constructor(pack_ctrl: PackCtrl) {
+    const options = pack_ctrl.options;
+    this.pack_ctrl = pack_ctrl;
     this.useBigInt64 = options?.useBigInt64 ?? false;
     this.maxDepth = options?.maxDepth ?? DEFAULT_MAX_DEPTH;
     this.initialBufferSize = options?.initialBufferSize ?? DEFAULT_INITIAL_BUFFER_SIZE;
@@ -107,20 +98,7 @@ export class Encoder<ContextType = undefined> {
   }
 
   private clone() {
-    // Because of slightly special argument `context`,
-    // type assertion is needed.
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-    return new Encoder<ContextType>({
-      extensionCodec: this.extensionCodec,
-      context: this.context,
-      useBigInt64: this.useBigInt64,
-      maxDepth: this.maxDepth,
-      initialBufferSize: this.initialBufferSize,
-      sortKeys: this.sortKeys,
-      forceFloat32: this.forceFloat32,
-      ignoreUndefined: this.ignoreUndefined,
-      forceIntegerToFloat: this.forceIntegerToFloat,
-    } as any);
+    return new Encoder(this.pack_ctrl);
   }
 
   private reinitializeState() {
@@ -334,20 +312,25 @@ export class Encoder<ContextType = undefined> {
   }
 
   private encodeObject(object: unknown, depth: number) {
-    // try to encode objects with custom codec first of non-primitives
-    const ext = this.extensionCodec.tryToEncode(object, this.context);
-    if (ext != null) {
-      this.encodeExtension(ext);
-    } else if (Array.isArray(object)) {
-      this.encodeArray(object, depth);
+    if (Array.isArray(object)) {
+      this.encodeArray(object, null, depth);
     } else if (ArrayBuffer.isView(object)) {
       this.encodeBinary(object);
-    } else if (typeof object === "object") {
-      this.encodeMap(object as Record<string, unknown>, depth);
+    } else if (this.isPlainMap(object)) {
+      this.encodeMap(object as Record<string, unknown>, null, depth);
     } else {
-      // symbol, function and other special object come here unless extensionCodec handles them.
-      throw new Error(`Unrecognized object: ${Object.prototype.toString.apply(object)}`);
+      const [as_dict, object_type, data] = this.pack_ctrl.from_obj(object);
+      if (as_dict) {
+        this.encodeMap(data as Record<string, unknown>, object_type, depth);
+      } else {
+        this.encodeArray(data, object_type, depth);
+      }
     }
+  }
+
+  private isPlainMap(object: unknown) {
+    const proto = Object.getPrototypeOf(object);
+    return proto === Object.prototype || proto === null;
   }
 
   private encodeBinary(object: ArrayBufferView) {
@@ -371,7 +354,7 @@ export class Encoder<ContextType = undefined> {
     this.writeU8a(bytes);
   }
 
-  private encodeArray(object: Array<unknown>, depth: number) {
+  private encodeArray(object: Array<unknown>, object_type: unknown, depth: number) {
     const size = object.length;
     if (size < 16) {
       // fixarray
@@ -387,6 +370,7 @@ export class Encoder<ContextType = undefined> {
     } else {
       throw new Error(`Too large array: ${size}`);
     }
+    this.doEncode(object_type, depth + 1);
     for (const item of object) {
       this.doEncode(item, depth + 1);
     }
@@ -404,7 +388,7 @@ export class Encoder<ContextType = undefined> {
     return count;
   }
 
-  private encodeMap(object: Record<string, unknown>, depth: number) {
+  private encodeMap(object: Record<string, unknown>, object_type: unknown, depth: number) {
     const keys = Object.keys(object);
     if (this.sortKeys) {
       keys.sort();
@@ -427,6 +411,8 @@ export class Encoder<ContextType = undefined> {
       throw new Error(`Too large map object: ${size}`);
     }
 
+    this.doEncode(object_type, depth + 1);
+
     for (const key of keys) {
       const value = object[key];
 
@@ -435,57 +421,6 @@ export class Encoder<ContextType = undefined> {
         this.doEncode(value, depth + 1);
       }
     }
-  }
-
-  private encodeExtension(ext: ExtData) {
-    if (typeof ext.data === "function") {
-      const data = ext.data(this.pos + 6);
-      const size = data.length;
-
-      if (size >= 0x100000000) {
-        throw new Error(`Too large extension object: ${size}`);
-      }
-
-      this.writeU8(0xc9);
-      this.writeU32(size);
-      this.writeI8(ext.type);
-      this.writeU8a(data);
-      return;
-    }
-
-    const size = ext.data.length;
-    if (size === 1) {
-      // fixext 1
-      this.writeU8(0xd4);
-    } else if (size === 2) {
-      // fixext 2
-      this.writeU8(0xd5);
-    } else if (size === 4) {
-      // fixext 4
-      this.writeU8(0xd6);
-    } else if (size === 8) {
-      // fixext 8
-      this.writeU8(0xd7);
-    } else if (size === 16) {
-      // fixext 16
-      this.writeU8(0xd8);
-    } else if (size < 0x100) {
-      // ext 8
-      this.writeU8(0xc7);
-      this.writeU8(size);
-    } else if (size < 0x10000) {
-      // ext 16
-      this.writeU8(0xc8);
-      this.writeU16(size);
-    } else if (size < 0x100000000) {
-      // ext 32
-      this.writeU8(0xc9);
-      this.writeU32(size);
-    } else {
-      throw new Error(`Too large extension object: ${size}`);
-    }
-    this.writeI8(ext.type);
-    this.writeU8a(ext.data);
   }
 
   private writeU8(value: number) {

@@ -1,18 +1,13 @@
 import { prettyByte } from "./utils/prettyByte.ts";
-import { ExtensionCodec } from "./ExtensionCodec.ts";
 import { getInt64, getUint64, UINT32_MAX } from "./utils/int.ts";
 import { utf8Decode } from "./utils/utf8.ts";
 import { ensureUint8Array } from "./utils/typedArrays.ts";
 import { CachedKeyDecoder } from "./CachedKeyDecoder.ts";
 import { DecodeError } from "./DecodeError.ts";
-import type { ContextOf } from "./context.ts";
-import type { ExtensionCodecType } from "./ExtensionCodec.ts";
 import type { KeyDecoder } from "./CachedKeyDecoder.ts";
 
-export type DecoderOptions<ContextType = undefined> = Readonly<
+export type DecoderOptions = Readonly<
   Partial<{
-    extensionCodec: ExtensionCodecType<ContextType>;
-
     /**
      * Decodes Int64 and Uint64 as bigint if it's set to true.
      * Depends on ES2020's {@link DataView#getBigInt64} and
@@ -57,12 +52,6 @@ export type DecoderOptions<ContextType = undefined> = Readonly<
      * Defaults to 4_294_967_295 (UINT32_MAX).
      */
     maxMapLength: number;
-    /**
-     * Maximum extension length.
-     *
-     * Defaults to 4_294_967_295 (UINT32_MAX).
-     */
-    maxExtLength: number;
 
     /**
      * An object key decoder. Defaults to the shared instance of {@link CachedKeyDecoder}.
@@ -77,8 +66,7 @@ export type DecoderOptions<ContextType = undefined> = Readonly<
      */
     mapKeyConverter: (key: unknown) => MapKeyType;
   }>
-> &
-  ContextOf<ContextType>;
+>;
 
 const STATE_ARRAY = "array";
 const STATE_MAP_KEY = "map_key";
@@ -213,16 +201,13 @@ const MORE_DATA = new RangeError("Insufficient data");
 
 const sharedCachedKeyDecoder = new CachedKeyDecoder();
 
-export class Decoder<ContextType = undefined> {
-  private readonly extensionCodec: ExtensionCodecType<ContextType>;
-  private readonly context: ContextType;
+export class Decoder {
   private readonly useBigInt64: boolean;
   private readonly rawStrings: boolean;
   private readonly maxStrLength: number;
   private readonly maxBinLength: number;
   private readonly maxArrayLength: number;
   private readonly maxMapLength: number;
-  private readonly maxExtLength: number;
   private readonly keyDecoder: KeyDecoder | null;
   private readonly mapKeyConverter: (key: unknown) => MapKeyType;
 
@@ -236,33 +221,26 @@ export class Decoder<ContextType = undefined> {
 
   private entered = false;
 
-  public constructor(options?: DecoderOptions<ContextType>) {
-    this.extensionCodec = options?.extensionCodec ?? (ExtensionCodec.defaultCodec as ExtensionCodecType<ContextType>);
-    this.context = (options as { context: ContextType } | undefined)?.context as ContextType; // needs a type assertion because EncoderOptions has no context property when ContextType is undefined
-
+  public constructor(options?: DecoderOptions) {
     this.useBigInt64 = options?.useBigInt64 ?? false;
     this.rawStrings = options?.rawStrings ?? false;
     this.maxStrLength = options?.maxStrLength ?? UINT32_MAX;
     this.maxBinLength = options?.maxBinLength ?? UINT32_MAX;
     this.maxArrayLength = options?.maxArrayLength ?? UINT32_MAX;
     this.maxMapLength = options?.maxMapLength ?? UINT32_MAX;
-    this.maxExtLength = options?.maxExtLength ?? UINT32_MAX;
     this.keyDecoder = options?.keyDecoder !== undefined ? options.keyDecoder : sharedCachedKeyDecoder;
     this.mapKeyConverter = options?.mapKeyConverter ?? mapKeyConverter;
   }
 
-  private clone(): Decoder<ContextType> {
+  private clone(): Decoder {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
     return new Decoder({
-      extensionCodec: this.extensionCodec,
-      context: this.context,
       useBigInt64: this.useBigInt64,
       rawStrings: this.rawStrings,
       maxStrLength: this.maxStrLength,
       maxBinLength: this.maxBinLength,
       maxArrayLength: this.maxArrayLength,
       maxMapLength: this.maxMapLength,
-      maxExtLength: this.maxExtLength,
       keyDecoder: this.keyDecoder,
     } as any);
   }
@@ -604,34 +582,7 @@ export class Decoder<ContextType = undefined> {
         // bin 32
         const size = this.lookU32();
         object = this.decodeBinary(size, 4);
-      } else if (headByte === 0xd4) {
-        // fixext 1
-        object = this.decodeExtension(1, 0);
-      } else if (headByte === 0xd5) {
-        // fixext 2
-        object = this.decodeExtension(2, 0);
-      } else if (headByte === 0xd6) {
-        // fixext 4
-        object = this.decodeExtension(4, 0);
-      } else if (headByte === 0xd7) {
-        // fixext 8
-        object = this.decodeExtension(8, 0);
-      } else if (headByte === 0xd8) {
-        // fixext 16
-        object = this.decodeExtension(16, 0);
-      } else if (headByte === 0xc7) {
-        // ext 8
-        const size = this.lookU8();
-        object = this.decodeExtension(size, 1);
-      } else if (headByte === 0xc8) {
-        // ext 16
-        const size = this.lookU16();
-        object = this.decodeExtension(size, 2);
-      } else if (headByte === 0xc9) {
-        // ext 32
-        const size = this.lookU32();
-        object = this.decodeExtension(size, 4);
-      } else {
+      } else { // unused values: 0xc0 || 0xd4-0xd8 0xc7-0xc9 (extensions in msgpack)
         throw new DecodeError(`Unrecognized type byte: ${prettyByte(headByte)}`);
       }
 
@@ -782,16 +733,6 @@ export class Decoder<ContextType = undefined> {
     const object = this.bytes.subarray(offset, offset + byteLength);
     this.pos += headOffset + byteLength;
     return object;
-  }
-
-  private decodeExtension(size: number, headOffset: number): unknown {
-    if (size > this.maxExtLength) {
-      throw new DecodeError(`Max length exceeded: ext length (${size}) > maxExtLength (${this.maxExtLength})`);
-    }
-
-    const extType = this.view.getInt8(this.pos + headOffset);
-    const data = this.decodeBinary(size, headOffset + 1 /* extType */);
-    return this.extensionCodec.decode(data, extType, this.context);
   }
 
   private lookU8() {
