@@ -84,6 +84,7 @@ const mapKeyConverter = (key: unknown): MapKeyType => {
 type StackMapState = {
   type: typeof STATE_MAP_KEY | typeof STATE_MAP_VALUE;
   size: number;
+  object_type: unknown;
   key: MapKeyType | null;
   readCount: number;
   map: Record<string, unknown>;
@@ -92,6 +93,7 @@ type StackMapState = {
 type StackArrayState = {
   type: typeof STATE_ARRAY;
   size: number;
+  object_type: unknown;
   array: Array<unknown>;
   position: number;
 };
@@ -112,18 +114,20 @@ class StackPool {
     const state = this.getUninitializedStateFromPool() as StackArrayState;
 
     state.type = STATE_ARRAY;
-    state.position = 0;
+    state.position = -1;
     state.size = size;
     state.array = new Array(size);
+    state.object_type = null;
   }
 
   public pushMapState(size: number) {
     const state = this.getUninitializedStateFromPool() as StackMapState;
 
     state.type = STATE_MAP_KEY;
-    state.readCount = 0;
+    state.readCount = -1;
     state.size = size;
     state.map = {};
+    state.object_type = null;
   }
 
   private getUninitializedStateFromPool() {
@@ -202,6 +206,7 @@ const MORE_DATA = new RangeError("Insufficient data");
 const sharedCachedKeyDecoder = new CachedKeyDecoder();
 
 export class Decoder {
+  private readonly unpack_ctrl: UnpackCtrl;
   private readonly useBigInt64: boolean;
   private readonly rawStrings: boolean;
   private readonly maxStrLength: number;
@@ -221,7 +226,9 @@ export class Decoder {
 
   private entered = false;
 
-  public constructor(options?: DecoderOptions) {
+  public constructor(unpack_ctrl: UnpackCtrl) {
+    const options = unpack_ctrl.options;
+    this.unpack_ctrl = unpack_ctrl;
     this.useBigInt64 = options?.useBigInt64 ?? false;
     this.rawStrings = options?.rawStrings ?? false;
     this.maxStrLength = options?.maxStrLength ?? UINT32_MAX;
@@ -233,16 +240,7 @@ export class Decoder {
   }
 
   private clone(): Decoder {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-    return new Decoder({
-      useBigInt64: this.useBigInt64,
-      rawStrings: this.rawStrings,
-      maxStrLength: this.maxStrLength,
-      maxBinLength: this.maxBinLength,
-      maxArrayLength: this.maxArrayLength,
-      maxMapLength: this.maxMapLength,
-      keyDecoder: this.keyDecoder,
-    } as any);
+    return new Decoder(this.unpack_ctrl);
   }
 
   private reinitializeState() {
@@ -593,21 +591,33 @@ export class Decoder {
         // arrays and maps
         const state = stack.top()!;
         if (state.type === STATE_ARRAY) {
-          state.array[state.position] = object;
+          if (state.position === -1) {
+            state.object_type = object;
+          } else {
+            state.array[state.position] = object;
+          }
           state.position++;
           if (state.position === state.size) {
             object = state.array;
+            if (state.object_type !== null) {
+              object = this.unpack_ctrl.from_list(state.object_type, object);
+            }
             stack.release(state);
           } else {
             continue DECODE;
           }
         } else if (state.type === STATE_MAP_KEY) {
-          if (object === "__proto__") {
-            throw new DecodeError("The key __proto__ is not allowed");
-          }
+          if (state.readCount === -1) {
+            state.object_type = object;
+            state.readCount = 0;
+          } else {
+            if (object === "__proto__") {
+              throw new DecodeError("The key __proto__ is not allowed");
+            }
 
-          state.key = this.mapKeyConverter(object);
-          state.type = STATE_MAP_VALUE;
+            state.key = this.mapKeyConverter(object);
+            state.type = STATE_MAP_VALUE;
+          }
           continue DECODE;
         } else {
           // it must be `state.type === State.MAP_VALUE` here
@@ -617,6 +627,9 @@ export class Decoder {
 
           if (state.readCount === state.size) {
             object = state.map;
+            if (state.object_type !== null) {
+              object = this.unpack_ctrl.from_dict(state.object_type, object);
+            }
             stack.release(state);
           } else {
             state.key = null;

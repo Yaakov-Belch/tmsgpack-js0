@@ -1,3 +1,4 @@
+import type { PackCtrl } from "./index.ts";
 import { utf8Count, utf8Encode } from "./utils/utf8.ts";
 import { setInt64, setUint64 } from "./utils/int.ts";
 import { ensureUint8Array } from "./utils/typedArrays.ts";

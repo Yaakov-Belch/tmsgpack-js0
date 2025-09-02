@@ -1,6 +1,6 @@
 import { Decoder } from "./Decoder.ts";
 import { ensureAsyncIterable } from "./utils/stream.ts";
-import type { DecoderOptions } from "./Decoder.ts";
+import type { UnpackCtrl } from "./index.ts";
 import type { ReadableStreamLike } from "./utils/stream.ts";
 /**
  * @throws {@link RangeError} if the buffer is incomplete, including the case where the buffer is empty.
@@ -8,10 +8,10 @@ import type { ReadableStreamLike } from "./utils/stream.ts";
  */
 export async function decodeAsync(
   streamLike: ReadableStreamLike<ArrayLike<number> | BufferSource>,
-  options?: DecoderOptions,
+  unpack_ctrl: UnpackCtrl,
 ): Promise<unknown> {
   const stream = ensureAsyncIterable(streamLike);
-  const decoder = new Decoder(options);
+  const decoder = new Decoder(unpack_ctrl);
   return decoder.decodeAsync(stream);
 }
 
@@ -21,10 +21,10 @@ export async function decodeAsync(
  */
 export function decodeArrayStream(
   streamLike: ReadableStreamLike<ArrayLike<number> | BufferSource>,
-  options?: DecoderOptions,
+  unpack_ctrl: UnpackCtrl,
 ): AsyncGenerator<unknown, void, unknown> {
   const stream = ensureAsyncIterable(streamLike);
-  const decoder = new Decoder(options);
+  const decoder = new Decoder(unpack_ctrl);
   return decoder.decodeArrayStream(stream);
 }
 
@@ -34,9 +34,9 @@ export function decodeArrayStream(
  */
 export function decodeMultiStream(
   streamLike: ReadableStreamLike<ArrayLike<number> | BufferSource>,
-  options?: DecoderOptions,
+  unpack_ctrl: UnpackCtrl,
 ): AsyncGenerator<unknown, void, unknown> {
   const stream = ensureAsyncIterable(streamLike);
-  const decoder = new Decoder(options);
+  const decoder = new Decoder(unpack_ctrl);
   return decoder.decodeStream(stream);
 }

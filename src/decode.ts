@@ -1,5 +1,5 @@
 import { Decoder } from "./Decoder.ts";
-import type { DecoderOptions } from "./Decoder.ts";
+import type { UnpackCtrl } from "./index.ts";
 
 /**
  * It decodes a single MessagePack object in a buffer.
@@ -12,9 +12,9 @@ import type { DecoderOptions } from "./Decoder.ts";
  */
 export function decode(
   buffer: ArrayLike<number> | ArrayBufferView | ArrayBufferLike,
-  options?: DecoderOptions,
+  unpack_ctrl: UnpackCtrl,
 ): unknown {
-  const decoder = new Decoder(options);
+  const decoder = new Decoder(unpack_ctrl);
   return decoder.decode(buffer);
 }
 
@@ -27,8 +27,8 @@ export function decode(
  */
 export function decodeMulti(
   buffer: ArrayLike<number> | BufferSource,
-  options?: DecoderOptions,
+  unpack_ctrl: UnpackCtrl,
 ): Generator<unknown, void, unknown> {
-  const decoder = new Decoder(options);
+  const decoder = new Decoder(unpack_ctrl);
   return decoder.decodeMulti(buffer);
 }

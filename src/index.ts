@@ -16,14 +16,18 @@ export type { DecoderOptions };
 import { DecodeError } from "./DecodeError.ts";
 export { DecodeError };
 
+export interface UnpackCtrl {
+  from_dict(object_type: unknown, data: Record<string, unknown>): unknown;
+  from_list(object_type: unknown, data: Array<unknown>): unknown;
+  options: DecoderOptions;
+}
+
 import { Encoder } from "./Encoder.ts";
 export { Encoder };
 import type { EncoderOptions } from "./Encoder.ts";
 export type { EncoderOptions };
 
-// PackCtrl Interface:
 export interface PackCtrl {
-  from_obj(object: unknown): [boolean, unknown, unknown]; // [as_dict, object_type,
-data]
+  from_obj(object: unknown): [boolean, unknown, unknown]; // [as_dict, object_type, data]
   options: EncoderOptions;
 }
