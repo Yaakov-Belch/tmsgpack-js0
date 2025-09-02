@@ -1,6 +1,39 @@
-# MessagePack for ECMA-262/JavaScript/TypeScript  <!-- omit in toc -->
+# tmsgpack: Typed MessagePack-inspired pack/unpack component
 
-[![npm version](https://img.shields.io/npm/v/@msgpack/msgpack.svg)](https://www.npmjs.com/package/@msgpack/msgpack) ![CI](https://github.com/msgpack/msgpack-javascript/workflows/CI/badge.svg) [![codecov](https://codecov.io/gh/msgpack/msgpack-javascript/branch/master/graphs/badge.svg)](https://codecov.io/gh/msgpack/msgpack-javascript) [![minzip](https://badgen.net/bundlephobia/minzip/@msgpack/msgpack)](https://bundlephobia.com/result?p=@msgpack/msgpack) [![tree-shaking](https://badgen.net/bundlephobia/tree-shaking/@msgpack/msgpack)](https://bundlephobia.com/result?p=@msgpack/msgpack)
+WORK IN PROGRESS -- TODO:
+* Rewrite the documentation. (Remove/adopt the msgpack documentation below).
+* Remove/rewrite examples in `examples/`.  This is a different format for a different
+  purpose.  The examples may be not meaningful for tmsgpack.
+
+
+The tmsgpack format expresses **typed objects**: maps and arrays (or: dicts and lists)
+with an `object_type` property.
+
+Unlike msgpack, this is not a batteries-included end-to-end serialization
+solution.  It is a composable component that helps you to build end-to-end communication
+solutions.
+
+Your system solution design will make decisions on:
+* What objects are serializable and what objects are not.
+* What code to use (and, maybe, dynamically load) to instantiate serialized objects.
+* How to represent objects that are unpacked but not supposed to 'live' in this process.
+* How to share dynamic data between different packs/unpacks.
+* How to asynchronously load and integrate shared data from different sources.
+* How to map typed object meaning between different programming languages.
+* Whether and how to convert persisted "old" data to current, new semantics (schemas).
+* How much to attach explicit meaning and predictable schemas to your object types.
+* Whether or not to use the 'expression execution' capabilities of tmsgpack.
+* etc.
+
+This library makes a minimal (backwards-incompatible) modification to the
+msgpack format to make all this elegantly possible.  This package is based on
+`msgpack-javascript v3.1.2`.
+
+The documentation of msgpack-javascript v3.1.2 is retained below.
+
+TODO: Rewrite the documentation.
+
+-----
 
 This library is an implementation of **MessagePack** for TypeScript and JavaScript, providing a compact and efficient binary serialization format. Learn more about MessagePack at:
 

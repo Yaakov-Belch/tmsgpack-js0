@@ -1,13 +1,13 @@
 {
-  "name": "@msgpack/msgpack",
+  "name": "tmsgpack",
   "version": "3.1.2",
-  "description": "MessagePack for ECMA-262/JavaScript/TypeScript",
-  "author": "The MessagePack community",
+  "description": "tmsgpack: Typed MessagePack-inspired pack/unpack component",
+  "author": "Yaakov Belch",
   "license": "ISC",
   "main": "./dist.cjs/index.cjs",
   "module": "./dist.esm/index.mjs",
-  "cdn": "./dist.umd/msgpack.min.js",
-  "unpkg": "./dist.umd/msgpack.min.js",
+  "cdn": "./dist.umd/tmsgpack.min.js",
+  "unpkg": "./dist.umd/tmsgpack.min.js",
   "types": "./dist.esm/index.d.ts",
   "sideEffects": false,
   "scripts": {
@@ -34,17 +34,16 @@
     "lint:print-config": "eslint --print-config .eslintrc.js",
     "update-dependencies": "npx rimraf node_modules/ package-lock.json ; npm install ; npm audit fix --force ; git restore package.json ; npm install"
   },
-  "homepage": "https://msgpack.org/",
+  "homepage": "https://github.com/Yaakov-Belch/tmsgpack-js",
   "repository": {
     "type": "git",
-    "url": "https://github.com/msgpack/msgpack-javascript.git"
+    "url": "https://github.com/Yaakov-Belch/tmsgpack-js.git"
   },
   "bugs": {
-    "url": "https://github.com/msgpack/msgpack-javascript/issues"
+    "url": "https://github.com/Yaakov-Belch/tmsgpack-js/issues"
   },
   "keywords": [
-    "msgpack",
-    "MessagePack",
+    "tmsgpack",
     "serialization",
     "universal"
   ],
@@ -79,7 +78,7 @@
     "lodash": "latest",
     "mocha": "latest",
     "msg-timestamp": "latest",
-    "msgpack-test-js": "latest",
+    "tmsgpack-test-js": "latest",
     "prettier": "latest",
     "rimraf": "latest",
     "ts-loader": "latest",
