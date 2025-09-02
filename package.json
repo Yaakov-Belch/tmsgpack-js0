@@ -1,6 +1,6 @@
 {
   "name": "tmsgpack",
-  "version": "3.1.2",
+  "version": "0.1.0",
   "description": "tmsgpack: Typed MessagePack-inspired pack/unpack component",
   "author": "Yaakov Belch",
   "license": "ISC",
@@ -78,7 +78,7 @@
     "lodash": "latest",
     "mocha": "latest",
     "msg-timestamp": "latest",
-    "tmsgpack-test-js": "latest",
+    "msgpack-test-js": "latest",
     "prettier": "latest",
     "rimraf": "latest",
     "ts-loader": "latest",
