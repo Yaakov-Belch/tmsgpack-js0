@@ -1,0 +1,13 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "module": "CommonJS",
+    "outDir": "./dist.cjs",
+    "declaration": false,
+    "noEmitOnError": true,
+    "noEmit": false,
+    "rewriteRelativeImportExtensions": true,
+    "incremental": false
+  },
+  "include": ["src/**/*.ts"]
+}

@@ -1,0 +1,13 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "module": "ES2020",
+    "outDir": "./dist.esm",
+    "declaration": true,
+    "noEmitOnError": true,
+    "noEmit": false,
+    "rewriteRelativeImportExtensions": true,
+    "incremental": false
+  },
+  "include": ["src/**/*.ts"]
+}

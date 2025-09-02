@@ -1,0 +1,22 @@
+node_modules/
+dist/
+dist.*/
+build/
+.nyc_output/
+coverage/
+benchmark/sandbox.ts
+
+# v8 profiler logs
+isolate-*.log
+
+# tsimp
+.tsimp/
+
+# deno
+deno.lock
+
+# flamebearer
+flamegraph.html
+
+# jsfuzz
+corpus/
