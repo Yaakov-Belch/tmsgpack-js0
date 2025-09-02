@@ -114,7 +114,7 @@ describe("edge cases", () => {
       const decoder = new Decoder(uctrl());
       assert.throws(() => {
         decoder.decode([
-          0x90, // fixarray size=0
+          0x90, 0xC0, // fixarray size=0
           ...encode(null, pctrl()),
         ]);
       }, RangeError);
@@ -124,7 +124,7 @@ describe("edge cases", () => {
     it("throws errors (asynchronous)", async () => {
       const decoder = new Decoder(uctrl());
       const createStream = async function* () {
-        yield [0x90]; // fixarray size=0
+        yield [0x90, 0xC0]; // fixarray size=0
         yield encode(null, pctrl());
       };
 
@@ -137,7 +137,7 @@ describe("edge cases", () => {
     it("throws errors (asynchronous)", async () => {
       const decoder = new Decoder(uctrl());
       const createStream = async function* () {
-        yield [0x90, ...encode(null, pctrl())]; // fixarray size=0 + nil
+        yield [0x90, 0xC0, ...encode(null, pctrl())]; // fixarray size=0 + nil
       };
 
       await assert.rejects(async () => {
